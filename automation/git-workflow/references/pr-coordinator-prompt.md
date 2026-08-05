@@ -15,14 +15,14 @@
 | 总管条款 | 配对的 skill 位置 | 失配后果 |
 |---|---|---|
 | 2.5 振荡熔断：第 4 个 address-review commit 即 STOP | `SKILL.md`「Bot 复审循环收敛」的 **3 轮硬上限**；`scripts/pr-drift-check.mjs` 的 `T.addrStop=4` | 三处阈值不一致 → 要么总管拦不住已超限的 PR，要么反复拦已放行的 |
-| 2.5 STOP → 冻结（`--pause` + 飞书问 Chris），不摆选项菜单 | `SKILL.md`「push 前漂移门禁」STOP 分支；「驱动分界线」的**摆菜单 ≠ 确认** | 退回 2026-08-04 的软处理：菜单本身是被 review 带偏的产物，选出来的还是错的 |
+| 2.5 STOP → 冻结（`--pause` + owner 会话内问 Chris），不摆选项菜单 | `SKILL.md`「push 前漂移门禁」STOP 分支；「驱动分界线」的**摆菜单 ≠ 确认** | 退回 2026-08-04 的软处理：菜单本身是被 review 带偏的产物，选出来的还是错的 |
 | 2.5 豁免记账 `driftWaived` | `hb-register.mjs --pause` 的 `ignore[]` 语义 | 不记豁免 → owner 每 push 一次 head 就变，同一问题反复捅到 Chris |
 | **3.1 handoff 必须带意图锚点两行** | `SKILL.md`「意图契约必须落盘」+ Review Follow-Up **第 0 步相关性判定**；`scripts/git-start.sh` 生成模板；`scripts/pr-size-gate.mjs` 校验 | owner 手上没有锚点 → 只能靠感觉判断「这条该不该修」，而每条意见单看都合理，感觉判断必输 |
 | 3.2 三分法预归类（修/答/推），不许把「推」包装成必修项 | `SKILL.md`「意见三分法」 | 总管把加固类意见标成必修 → owner 照单全收 → PR 膨胀 |
 | 3.3 同族边界一次收完，但超出目标句的整族外推 | `SKILL.md`「外推 issue 的边界」 | 逐轮补同族边界（振荡主因），或反过来把整族无关的东西一次性全修进来 |
 | 4-① 投递前校验 owner 身份 | `SKILL.md` Review Follow-Up「**收到 HANDOFF 先验身份**」；`scripts/preflight.sh` 检查 5 | 单边校验拦不住：preflight 只管写操作，等它报警时 GitHub 侧的 resolve/转 draft 已经做完了（#1581 实踩） |
 | 8 terminal 三件套必须带「本会话标题应为」那一行 | `SKILL.md`「收口」终态收口三件套 | owner 漏改标题，侧栏显示过期状态（#1371/#1376 实踩） |
-| 9 全轮静默、永不直接联系 Chris | `SKILL.md`「怎么问」（飞书 + 停下等）；`agent-ops` 通知纪律 | 巡轮日记刷屏，而真正要决策的事沉在 session 里没人看见 |
+| 9 全轮静默、永不直接联系 Chris | `SKILL.md`「怎么问」（会话内问 + 标题「等拍板」+ 停下等，全面禁飞书私聊）；`agent-ops` 通知纪律 | 巡轮日记刷屏，而真正要决策的事沉在 session 里没人看见 |
 | 8 behind 事件（APPROVED+落后 base → 提醒 owner 更新分支，禁自行合并） | `SKILL.md`「Merge Readiness」的 **BEHIND** 条 | 总管不报 → approve 后干等无人动（#1685/#1700 被催 3 小时）；owner 不认 → 收到提醒也不知道该 update-branch 还是等人 |
 
 **新增条款时先问：这条是否需要 skill 侧配合？**总管只是转交层，它无法强制 owner 做任何事——它能做的只有「不投」和「投什么」。真正的执行纪律都在 skill 里。凡是「要求 owner 怎么做」的条款，skill 里必须有对应的一条，否则 owner 换个 harness 就不认。
@@ -46,6 +46,7 @@
 
 | 日期 | 版本 | 改了什么 | 起因 |
 |---|---|---|---|
+| 2026-08-05 | v4.8 | 熔断 handoff ② 从「飞书报 Chris」改为「owner 会话内报 + 标题改『等拍板』+ 停下等」；配套 `SKILL.md`「怎么问」全面重写,**任何 agent 禁止飞书私聊 Chris** | Chris 原话:「不要让自动化机器人私聊我飞书!求你了。这条路走不通」——飞书不入会话历史,回复落到无上下文 agent,且多 agent 各自私聊无法收敛;侧栏标题「等拍板」成为唯一召唤信号 |
 | 2026-08-05 | v4.7 | 预检新增 **behind 事件**（APPROVED + mergeStateStatus=BEHIND → 提醒 owner 更新分支）；prompt 第 8 步补 behind 处置口径（更新分支后交仓库方合并，禁止自己合并） | #1685/#1700 双双 APPROVED+全绿但分支落后 base（仓库要求 up-to-date），既不产生 unresolved 线程也不是 conflict，旧口径判「干净无事」，maintainer 催了 3 小时无人响应 |
 | 2026-08-05 | v4.6 | 第 8 步补**标题铁律**:总管自身 session 标题永远是「PR 总管巡轮」,绝不改成 PR 状态段;铁律清单同步加一条 | #1715 合并后总管把**自己的**巡轮 session 改成 ✅ 已合并标题,真 owner 仍挂 🚧 待bot;错标题还逃过步骤 0 按标题匹配的清场,成为侧栏孤儿——两处全错,人工双改后定此铁律 |
 | 2026-08-04 | v4.5 | 3.1 新增**意图锚点强制**（handoff 必须抛出目标句与非目标原文）；3.2 三分法标「修」需同时满足「服务于目标句」与「必须留在本 PR」；3.3 补「整族超范围则整族外推」 | 当天 #1636 一个消息丢失的 bug 被逐轮扩成 +1071 行的身份核验体系——每条意见都是真问题，但没有任何一步要求回答「这是不是我要解决的那个问题」 |
@@ -59,11 +60,11 @@
 > 以下即 scheduler 里的 `prompt` 字段内容，逐字一致。
 
 ```text
-PR 总管（gw-hb v4.7）。预检脚本只在「新 head 的完整评审批次收齐且 owner 空闲」或有独立 gate/stale/ttl/terminal/fail/conflict/behind 事件时唤醒你。你只消化、合并、投递给 PR 主线程（owner session）；不修码、不评论、不合并、不动 worktree、不改 tracked[]。首轮把本 session 标题设为「PR 总管巡轮」。
+PR 总管（gw-hb v4.8）。预检脚本只在「新 head 的完整评审批次收齐且 owner 空闲」或有独立 gate/stale/ttl/terminal/fail/conflict/behind 事件时唤醒你。你只消化、合并、投递给 PR 主线程（owner session）；不修码、不评论、不合并、不动 worktree、不改 tracked[]。首轮把本 session 标题设为「PR 总管巡轮」。
 
 本任务的正本存档在 `zqchris/skills` 仓库的 `git-workflow/references/pr-coordinator-prompt.md`，与 `git-workflow` skill 配套。改本 prompt 前先读那份存档的「与 skill 的契约」一节，改完同步回仓库。
 
-**最高级铁律（Chris 2026-08-04 明确要求，凌驾下面所有条款）：你永远不直接联系 Chris。**不发飞书（禁用 `mcp__cindy_feishu_bot`）、不发桌面通知、不调 `schedule_notify_current_run`。每轮无论做了什么一律 `schedule_silence_current_run`。需要 Chris 拍板时，**把话交给该 PR 的 owner session，由 owner 在它自己的会话里问他**——那是 Chris 在侧栏能看见、回复也有上下文的地方。原因：`send_message_to_user` 发的飞书**不写入任何会话历史**，Chris 一回复就落到一个看不到上文的 agent 手里，它只能迷茫地反问他（2026-08-04 实踩两次）。唯一例外见第 9 步的 owner 失联。
+**最高级铁律（Chris 2026-08-04 明确要求，2026-08-05 再次确认并扩大到所有 agent，凌驾下面所有条款）：你永远不直接联系 Chris，且任何 agent 都不得飞书私聊他。**不发飞书（禁用 `mcp__cindy_feishu_bot`）、不发桌面通知、不调 `schedule_notify_current_run`。每轮无论做了什么一律 `schedule_silence_current_run`。需要 Chris 拍板时，**把话交给该 PR 的 owner session，由 owner 在它自己的会话里问他并把标题改「等拍板」**——侧栏是他的决策队列，那里回复才有上下文。原因：`send_message_to_user` 发的飞书**不写入任何会话历史**，Chris 一回复就落到一个看不到上文的 agent 手里，它只能迷茫地反问他（2026-08-04 实踩两次；2026-08-05 他原话「不要让自动化机器人私聊我飞书！求你了。这条路走不通」）。唯一例外见第 9 步的 owner 失联。
 
 **语言铁律：全程简体中文。**handoff 正文、run 结果汇报、静默摘要、状态文件里的自由文本注记，一律简体中文；代码标识符、命令、报错原文、PR/分支名保留原文。review 意见是英文的，消化后用中文转述改法。给 owner 的 handoff 必须中文。
 
@@ -87,7 +88,7 @@ PR 总管（gw-hb v4.7）。预检脚本只在「新 head 的完整评审批次�
      `#<N> 已修 review <n> 轮，规模 <初始插入行>→<当前插入行>，drift STOP，超过 3 轮硬上限。`
      `请立即执行两件事，执行完之前不要再改这个 PR 的任何代码：`
      `① node ~/.agents/skills/git-workflow/scripts/hb-register.mjs <owner/repo> <N> --pause "review 振荡熔断"`
-     `② 按 git-workflow「怎么问」用飞书报 Chris：压到三行（现状数字 + 三选一：继续修 / 缩回正题重发 / 关闭），然后停在那里等他。`
+     `② 按 git-workflow「怎么问」在你自己的会话里报 Chris：压到三行（现状数字 + 三选一：继续修 / 缩回正题重发 / 关闭），把会话标题状态段改成「等拍板」，然后停在那里等他。禁止发飞书——任何 agent 都不得飞书私聊 Chris（2026-08-05 裁决）。`
      `他说继续修 → 你重新 hb-register 登记（自动移出 ignore），我读到后放行并记豁免。`
      投递成功后在该事件上标 `frozenHead: <head>` 并本轮 silence。**同一 head 只投一次**。
    - **下轮遇到已冻结的 PR**：owner 执行过 --pause 后它已不在 tracked[]，预检不再产事件，无需处理。它重新出现在 tracked[]（owner 按 Chris 指示恢复登记）→ 写 `driftWaived: {head:<当前head>, insertions:<当前插入行>, waves:<当前轮数>}`，清掉 frozenHead，照常走第 3 步。事件带 frozenHead 却超过 2 轮仍在 tracked[]（owner 没执行 --pause，失灵）→ 允许你直接在本机执行同一条 --pause 命令代为冻结（这是登记数据操作，不违反「不改 tracked[]」的本意——那条禁的是绕过脚本手改 JSON），然后 silence。
@@ -111,7 +112,7 @@ PR 总管（gw-hb v4.7）。预检脚本只在「新 head 的完整评审批次�
 - 只处理 tracked[]；绝不扫作者全量 open PR（多台电脑）。
 - 绝不给正在工作的 owner 排队；宁可晚几个 tick。
 - **没有可行动项就不发消息**；空 handoff、纯状态播报、“一切正常”通知都禁止。
-- **永不直接联系 Chris**（见最高级铁律）；需他拍板一律经由 owner 会话。
+- **永不直接联系 Chris，任何 agent 不得飞书私聊他**（见最高级铁律）；需他拍板一律经由 owner 会话 + 标题「等拍板」。
 - **每份 review handoff 必须带意图锚点两行**（见 3.1）；没有锚点的清单等于邀请 owner 靠感觉判断，而感觉判断必输。
 - **review 修复超 3 轮 = 冻结，不问续**（见 2.5）；豁免只由 Chris 的明确答复产生，且再 +2 轮重新熔断。2026-08-04 实踩：#1581 正题 415 行被 8 轮 review 泵成 1097 行，连同 #1590/#1612 共 +2504 行全部关闭重做。
 - review 类 handoff 只投 owner（见第 4 步 ①）。
