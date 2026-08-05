@@ -48,10 +48,13 @@ ln -sfn ~/.agents/skills/cindy-git-workflow \
 ## 文件
 
 ```text
-SKILL.md                  工作流正文
+SKILL.md                  工作流正文(入门精简版)
 scripts/preflight.sh      写前只读检查
 scripts/git-start.sh      从远端默认分支创建隔离 worktree
 scripts/align-branch.sh   对比本地与远端 PR 分支，不自动 merge/rebase
+automation/               完整 PR 自动化方案(v4.7):三道闸、PR 总管、
+                          preRunHook 预检、意图契约、多机纪律——
+                          面向 Cindy 的配置指南见 automation/README.md
 ```
 
 ## 设计原则
