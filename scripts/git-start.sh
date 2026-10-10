@@ -15,7 +15,7 @@ root=$(git rev-parse --show-toplevel 2>/dev/null) || {
   echo "FAIL: not inside a Git repository"
   exit 2
 }
-main_root=$(git -C "$root" worktree list --porcelain | awk '$1 == "worktree" { print $2; exit }')
+main_root=$(git -C "$root" worktree list --porcelain | sed -n '1s/^worktree //p')
 repo=$(basename "$main_root")
 
 if ! git -C "$main_root" remote get-url "$remote" >/dev/null 2>&1; then
@@ -26,8 +26,14 @@ fi
 echo "Fetching $remote ..."
 git -C "$main_root" fetch "$remote" --prune
 
-default_branch=$(git -C "$main_root" symbolic-ref --quiet --short "refs/remotes/$remote/HEAD" 2>/dev/null | sed "s#^$remote/##" || true)
-[[ -n "$default_branch" ]] || default_branch=main
+# Query the live default branch: a local remote/HEAD may be absent or stale.
+remote_head=$(git -C "$main_root" ls-remote --symref "$remote" HEAD)
+default_branch=$(printf '%s\n' "$remote_head" | sed -n 's#^ref: refs/heads/\(.*\)[[:space:]]HEAD$#\1#p')
+[[ -n "$default_branch" ]] || {
+  echo "FAIL: remote default branch is not advertised by $remote"
+  echo "ACTION: inspect the remote HEAD before choosing a task base"
+  exit 2
+}
 
 branch="$slug"
 worktree="$(dirname "$main_root")/${repo}-${slug}"
@@ -45,7 +51,7 @@ if ! git -C "$main_root" show-ref --verify --quiet "refs/remotes/$remote/$defaul
   exit 2
 fi
 
-git -C "$main_root" worktree add -b "$branch" "$worktree" "$remote/$default_branch"
+git -C "$main_root" worktree add --no-track -b "$branch" "$worktree" "refs/remotes/$remote/$default_branch"
 
 echo "PASS: worktree=$worktree"
 echo "base=$remote/$default_branch@$(git -C "$worktree" rev-parse --short HEAD)"

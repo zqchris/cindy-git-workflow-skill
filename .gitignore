@@ -9,3 +9,4 @@ credentials*
 tokens.json
 *.log
 *.bak
+__pycache__/

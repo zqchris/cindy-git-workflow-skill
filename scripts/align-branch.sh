@@ -45,7 +45,11 @@ if [[ "$local_sha" == "$remote_sha" ]]; then
 fi
 
 base=$(git -C "$root" merge-base "$local_sha" "$remote_sha" 2>/dev/null || true)
-if [[ "$base" == "$local_sha" ]]; then
+if [[ -z "$base" ]]; then
+  echo "UNRELATED: local and remote branch have no common ancestor"
+  echo "ACTION: verify repository and branch ownership; do not overwrite either history"
+  exit 2
+elif [[ "$base" == "$local_sha" ]]; then
   count=$(git -C "$root" rev-list --count "$local_sha..$remote_sha")
   echo "BEHIND: local branch is behind by $count commit(s)"
 elif [[ "$base" == "$remote_sha" ]]; then

@@ -13,15 +13,22 @@ if [[ -z "$branch" ]]; then
   exit 2
 fi
 
-main_root=$(git -C "$root" worktree list --porcelain | awk '$1 == "worktree" { print $2; exit }')
-default_branch=$(git -C "$root" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#^origin/##' || true)
-[[ -n "$default_branch" ]] || default_branch=main
-
-if [[ "$root" == "$main_root" && "$branch" == "$default_branch" ]]; then
-  echo "FAIL: main checkout is on the default branch ($default_branch)"
+main_root=$(git -C "$root" worktree list --porcelain | sed -n '1s/^worktree //p')
+if [[ "$root" == "$main_root" ]]; then
+  echo "FAIL: primary checkout is reserved; current branch=$branch"
   echo "ACTION: run git-start.sh <task-slug> to create an isolated worktree"
   exit 2
 fi
+
+# This gate is deliberately offline. The caller still verifies the current
+# upstream and task ownership; local refs are not proof of a fresh base.
+while IFS= read -r remote; do
+  default_ref=$(git -C "$root" symbolic-ref --quiet "refs/remotes/$remote/HEAD" 2>/dev/null || true)
+  if [[ -n "$default_ref" && "$branch" == "${default_ref#refs/remotes/$remote/}" ]]; then
+    echo "FAIL: task worktree is on the known default branch ($branch)"
+    exit 2
+  fi
+done < <(git -C "$root" remote)
 
 status=$(git -C "$root" status --porcelain=v1)
 if [[ -n "$status" ]]; then
